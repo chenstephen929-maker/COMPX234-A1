@@ -23,22 +23,23 @@ class Assignment1:
     def startSimulation(self):
         # Create Machine and Printer threads
         # Write code here
-        for i in range(50):
-            machine=self.machineThread(i)
+        for i in range(self.NUM_MACHINES):
+            machine=self.machineThread(i,self)
             machine.start()
             self.mThreads.append(machine)
-        for i in range(5):
-            printer=self.printerThread(i)
-            machine.start()
+        for i in range(self.NUM_PRINTERS):
+            printer=self.printerThread(i,self)
+            print.start()
             self.pThreads.append(printer)
 
         # Start all the threads
         # Write code here
-        for machineThread in self.mThreads:
-            machineThread.join()
+        for thread in self.mThreads:
+            thread.join()
+        
+        for thread in self.pThreads:
+            thread.join()
 
-        for printerThread in self.pThreads:
-            printerThread.join()
 
 
         # Let the simulation run for some time
@@ -63,7 +64,7 @@ class Assignment1:
                 self.printerSleep()
                 # Grab the request at the head of the queue and print it
                 # Write code here
-                self.printDox()
+                self.printDox(self.printerID)
 
         def printerSleep(self):
             sleepSeconds = random.randint(1, self.outer.MAX_PRINTER_SLEEP)
@@ -87,7 +88,7 @@ class Assignment1:
                 self.machineSleep()
                 # Machine wakes up and sends a print request
                 # Write code here
-                self.printRequest()
+                self.printRequest(self.machineID)
 
         def machineSleep(self):
             sleepSeconds = random.randint(1, self.outer.MAX_MACHINE_SLEEP)
