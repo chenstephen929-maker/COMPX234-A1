@@ -100,3 +100,37 @@ class Assignment1:
             doc = printDoc(f"My name is machine {id}", id)
             # Insert it in the print queue
             self.outer.print_list.queueInsert(doc)
+
+    class PrinterMonitor:
+
+        def __init__(self,total_printers= 5):
+    
+            self.total= total_printers
+            self.avaliable_printers=total_printers
+            self.printers_status=[True]*total_printers
+            self.condition=threading.Condition()
+
+            def requestPrinter(self):
+                with self.condition:
+                    while self.avaliable_printers==0:
+                        self.condition.wait()
+                    assign_id=-1
+                    for i in range(total_printers):
+                        if self.printers_status[i]:
+                            self.printers_status[i]=False
+                            self.avaliable_printers-=1
+                            assign_id=i
+
+
+            def releasePrinter(self,printer_id):
+                with self.condition:
+                    self.printers_status[printer_id]=True
+                    self.avaliable_printers+=1
+                    self.condition.notify()
+
+    
+
+
+            
+
+    
