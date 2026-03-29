@@ -23,22 +23,19 @@ class Assignment1:
     def startSimulation(self):
         # Create Machine and Printer threads
         # Write code here
+        monitor= self.PrinterMonitor()
         for i in range(self.NUM_MACHINES):
-            machine=self.machineThread(i,self)
+            machine=self.machineThread(i,self,monitor)
             machine.start()
             self.mThreads.append(machine)
         for i in range(self.NUM_PRINTERS):
-            printer=self.printerThread(i,self)
-            print.start()
+            printer=self.printerThread(i,self,monitor)
+            printer.start()
             self.pThreads.append(printer)
 
         # Start all the threads
         # Write code here
-        for thread in self.mThreads:
-            thread.join()
-        
-        for thread in self.pThreads:
-            thread.join()
+
 
 
 
@@ -53,10 +50,11 @@ class Assignment1:
 
     # Printer class
     class printerThread(threading.Thread):
-        def __init__(self, printerID, outer):
+        def __init__(self, printerID, outer,monitor):
             threading.Thread.__init__(self)
             self.printerID = printerID
             self.outer = outer  # Reference to the Assignment1 instance
+            self.monitor=monitor
 
         def run(self):
             while self.outer.sim_active:
@@ -73,14 +71,15 @@ class Assignment1:
         def printDox(self, printerID):
             print(f"Printer ID: {printerID} : now available")
             # Print from the queue
-            self.outer.print_list.queuePrint(printerID)
+            self.monitor.print_job(self.outer,printerID)
 
     # Machine class
     class machineThread(threading.Thread):
-        def __init__(self, machineID, outer):
+        def __init__(self, machineID, outer,monitor):
             threading.Thread.__init__(self)
             self.machineID = machineID
             self.outer = outer  # Reference to the Assignment1 instance
+            self.monitor=monitor
 
         def run(self):
             while self.outer.sim_active:
@@ -99,34 +98,32 @@ class Assignment1:
             # Build a print document
             doc = printDoc(f"My name is machine {id}", id)
             # Insert it in the print queue
-            self.outer.print_list.queueInsert(doc)
+            self.monitor.insert_job(self.outer,doc)
 
     class PrinterMonitor:
 
-        def __init__(self,total_printers= 5):
+        def __init__(self,max_queue=5):
     
-            self.total= total_printers
-            self.avaliable_printers=total_printers
-            self.printers_status=[True]*total_printers
+            self.max_size= max_queue
+            self.count=0
             self.condition=threading.Condition()
 
-            def requestPrinter(self):
-                with self.condition:
-                    while self.avaliable_printers==0:
-                        self.condition.wait()
-                    assign_id=-1
-                    for i in range(total_printers):
-                        if self.printers_status[i]:
-                            self.printers_status[i]=False
-                            self.avaliable_printers-=1
-                            assign_id=i
+        def insert_job(self,outer,doc):
+            with self.condition:
+                while self.count==self.max_size:
+                    self.condition.wait()
+                outer.print_list.queueInsert(doc)
+                self.count+=1
+                self.condition.notify_all()
 
 
-            def releasePrinter(self,printer_id):
-                with self.condition:
-                    self.printers_status[printer_id]=True
-                    self.avaliable_printers+=1
-                    self.condition.notify()
+        def print_job(self,outer,printer_id):
+            with self.condition:
+                while self.count==0:
+                    self.condition.wait()
+                outer.print_list.queuePrint(printer_id)
+                self.count-=1
+                self.condition.notify_all()
 
     
 
